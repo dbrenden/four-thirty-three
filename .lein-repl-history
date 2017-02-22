@@ -1,0 +1,23 @@
+exit
+ext
+exit
+(use 'figwheel-sidecar.repl-api)
+(start-figwheel!)
+(switch-build "android")
+(switch-to-build "android")
+exit
+(use 'figwheel-sidecar.repl-api)
+(start-figwheel!)
+(switch-to-build "android")
+exit
+(use 'figwheel-sidecar.repl-api)
+(start-figwheel!)
+exit
+(use 'figwheel-sidecar.repl-api)
+(start-figwheel!)
+exit
+ext
+exit
+(use 'figwheel-sidecar.repl-api)
+(start-figwheel!)
+exit
