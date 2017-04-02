@@ -3,13 +3,20 @@
             [four-thirty-three-core.protocols :as p]
             [cljs-time.core :as t]
             [cljs-time.coerce :as tc])
-  (:require-macros [cljs.core.async.macros :refer [go]]))
+  (:require-macros [cljs.core.async.macros :refer [go]]
+                   [gracilius.core :refer [defprop]]))
 
-(defn init-uploader-loop
-  [recordings<]
-  (go
-    (loop []
-      (when-let [recording (a/<! recordings<)]
-        (println "Uploading recording")
-        (recur)))
-    (println "Shutting down upload")))
+(defprop chan-size :chan-size 100)
+
+(defn init-upload-loop
+  [recordings< uploader]
+  (let [output> (a/chan (chan-size))]
+    (go
+      (loop []
+        (when-let [recording (a/<! recordings<)]
+          (p/upload uploader {})
+          (a/>! output> recording)
+          (recur)))
+      (do (println "Shutting down upload")
+          (a/close! output>)))
+    output>))

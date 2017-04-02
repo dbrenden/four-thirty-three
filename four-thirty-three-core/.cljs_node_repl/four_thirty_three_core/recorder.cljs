@@ -5,7 +5,7 @@
             [cljs-time.coerce :as tc])
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
-(defn init-record-loop [period recording-length recorder output>]
+(defn init-record-loop [output> period recording-length recorder]
   (let [stop< (a/chan)]
     (go
       (loop []

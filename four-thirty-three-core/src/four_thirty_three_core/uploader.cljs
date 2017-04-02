@@ -1,15 +1,16 @@
 (ns four-thirty-three-core.uploader
   (:require [cljs.core.async :as a]
-            [four-thirty-three-core.protocols :as p]
+            [four-thirty-three-core.protocols.uploadable :as up]
+            [four-thirty-three-core.protocols.postable :as pp]
             [cljs-time.core :as t]
             [cljs-time.coerce :as tc])
-  (:require-macros [cljs.core.async.macros :refer [go]]))
+  (:require-macros [cljs.core.async.macros :refer [go]]
+                   [gracilius.core :refer [defprop]]))
 
-(defn init-uploader-loop
-  [recordings<]
+(defprop chan-size :chan-size 100)
+x
+(defn upload
+  [uploader poster]
   (go
-    (loop []
-      (when-let [recording (a/<! recordings<)]
-        (println "Uploading recording")
-        (recur)))
-    (println "Shutting down upload")))
+    (let [url (a/<! (up/upload uploader {}))]
+      (pp/post poster {:url url}))))

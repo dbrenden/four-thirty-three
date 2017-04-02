@@ -1,14 +1,13 @@
 (ns four-thirty-three-core.recorder
   (:require [cljs.core.async :as a]
-            [four-thirty-three-core.protocols :as p]
             [cljs-time.core :as t]
-            [cljs-time.coerce :as tc])
+            [cljs-time.coerce :as tc]            )
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
-(defn init-record-loop [period recording-length recorder output>]
+(defn init-record-loop [output> period recording-length recorder]
   (let [stop< (a/chan)]
     (go
-      (loop []
+      (loop [post-sleep 0]
         (if-not (a/poll! stop<)
           (let [start (tc/to-long (t/now))
                 timeout-length (rand-int (- period recording-length 20000))]
