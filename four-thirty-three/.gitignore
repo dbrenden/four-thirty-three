@@ -5,11 +5,11 @@ pom.xml
 /out/
 /release/
 node_modules/
-/target/
+target/
 .lein-deps-sum
 .lein-repl-history
 .lein-plugins/
 .repl*
 .DS_Store
-/.cljs_node_repl
+.cljs_node_repl/
 .nrepl-port
