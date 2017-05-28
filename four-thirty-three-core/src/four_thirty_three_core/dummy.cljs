@@ -28,24 +28,38 @@
   (post [_ params]
     (println "POSTING TO TVVITTER")))
 
+(defn calc-post-record-sleep
+  [{:keys [period record-start-time record-end-time pre-record-sleep]}]
+  (- period pre-record-sleep
+     (- record-end-time record-start-time)))
+
+(defn calc-pre-record-sleep
+  [{:keys [period recording-length buffer-length]}]
+  (rand-int (- period recording-length buffer-length)))
+
 (defrecord ScheduledRecorder [recorder period recording-length buffer-length output> stop>]
   sp/Scheduled
   (init [this]
     (go
-      (loop [start-time (tc/to-long (t/now))
-             pre-sleep-length 0]
+      (loop [record-start-time (tc/to-long (t/now)) ;;Time that recording starts
+             pre-record-sleep 0] ;;Length of time spent sleeping between beginning of period and record
         (let [_ (<! (sp/perform this))
-              post-record-time (tc/to-long (t/now))
-              post-sleep-length (- period pre-sleep-length
-                                   (- post-record-time start-time))
-              pre-sleep-length (rand-int (- period recording-length buffer-length))
-              timeout-length (+ post-sleep-length pre-sleep-length)]
-          (println "POST-RECORD-SLEEP: " {:post-sleep-length post-sleep-length})
-          (println "PRE-RECORD-SLEEP: " {:pre-sleep-length pre-sleep-length})
+              record-end-time (tc/to-long (t/now)) ;;Time at which recording ended
+              post-record-sleep (calc-post-record-sleep {:period period
+                                                         :record-start-time record-start-time
+                                                         :pre-record-sleep pre-record-sleep
+                                                         :record-end-time record-end-time})
+              _ (println "SUM OF SLEEPS: " (+ pre-record-sleep post-record-sleep recording-length) " PERIOD: " period " (should be equal)")
+              pre-record-sleep (calc-pre-record-sleep {:period period
+                                                       :recording-length recording-length
+                                                       :buffer-length buffer-length})
+              timeout-length (+ post-record-sleep pre-record-sleep)]
+          (println "POST-RECORD-SLEEP: " {:post-record-sleep post-record-sleep})
+          (println "PRE-RECORD-SLEEP: " {:pre-record-sleep pre-record-sleep})
           (println "TIMEOUT LENGTH: " {:timeout-length timeout-length})
           (alts! [stop> (a/timeout timeout-length)])
           (if-not (a/poll! stop>)
-            (recur (tc/to-long (t/now)) pre-sleep-length)
+            (recur (tc/to-long (t/now)) pre-record-sleep)
             (do (println "Shutting down recording")
                 (a/close! output>)))))))
   (perform [this]
