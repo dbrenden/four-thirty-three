@@ -37,7 +37,7 @@
   [{:keys [period recording-length buffer-length]}]
   (rand-int (- period recording-length buffer-length)))
 
-(defrecord ScheduledRecorder [recorder period recording-length buffer-length output> stop>]
+(defrecord ScheduledRecorder [queue recorder period recording-length buffer-length output> stop>]
   sp/Scheduled
   (init [this]
     (go
@@ -66,12 +66,15 @@
     (go (let [recording (rp/start recorder {})
               [v c] (alts! [stop> (a/timeout recording-length)])]
           (when-not (= c stop>)
-            (a/>! output> (rp/stop recorder recording))))))
+            (a/>! output> (rp/stop recorder recording))
+            (println "Pushing recording to queue")
+            (swap! queue conj recording)))))
   (stop [this]
     (go (a/>! stop> true))))
 
 (defn instantiate []
-  (let [scheduled-recorder (map->ScheduledRecorder. {:recorder (Recorder.)
+  (let [scheduled-recorder (map->ScheduledRecorder. {:queue (atom #queue [])
+                                                     :recorder (Recorder.)
                                                      :period 60000
                                                      :recording-length 5000
                                                      :buffer-length 10000

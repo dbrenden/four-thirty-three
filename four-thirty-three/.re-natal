@@ -1,0 +1,28 @@
+{
+  "name": "FourThirtyThree",
+  "interface": "rum",
+  "envRoots": {
+    "dev": "env/dev",
+    "prod": "env/prod"
+  },
+  "modules": [
+    "react-native-background-timer",
+    "react-native-audio",
+    "react-native-sound"
+  ],
+  "imageDirs": [
+    "images"
+  ],
+  "platforms": {
+    "ios": {
+      "host": "localhost",
+      "modules": []
+    },
+    "android": {
+      "host": "localhost",
+      "modules": [
+        "react-native-background-job"
+      ]
+    }
+  }
+}

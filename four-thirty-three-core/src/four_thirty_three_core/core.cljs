@@ -1,5 +1,5 @@
 (ns four-thirty-three-core.core
-  (:require [clojure.spec :as s]
+  (:require [cljs.spec.alpha :as s]
             [cljs.core.async :as a]
             [four-thirty-three-core.protocols.scheduled :as sp]
             [four-thirty-three-core.protocols.recordable :as rp]

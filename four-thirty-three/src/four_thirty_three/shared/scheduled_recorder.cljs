@@ -4,6 +4,7 @@
             [four-thirty-three-core.protocols.recordable :as rp]
             [four-thirty-three-core.protocols.scheduled :as sp]
             [four-thirty-three-core.util :as u]
+            [four-thirty-three.shared.recorder :refer [Recorder]]
             [cljs.core.async :as a]
             [cljs.spec.alpha :as s]
             [cljs-time.core :as t]
@@ -24,15 +25,6 @@
   [period]
   (.log js/console (str "Scheduling function to fire in " (int (/ period 1000)) " secs"))
   (.schedule BackgroundJob #js {:jobKey "fourThirtyThreeRecord" :period period :timeout 900000}))
-
-(defrecord Recorder []
-  rp/Recordable
-  (start [_ params]
-    (.log js/console "STARTING RECORDING")
-    "recording")
-  (stop [_ recording]
-    (.log js/console "STOPPING RECORDING")
-    recording))
 
 (defrecord ScheduledRecorder [recorder period recording-length buffer-length pre-record-sleep recording-date]
   sp/Scheduled
