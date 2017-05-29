@@ -1,13 +1,15 @@
 (ns four-thirty-three.android.core
   (:require-macros [rum.core :refer [defc]])
   (:require [re-natal.support :as support]
-            [rum.core :as rum]))
+            [rum.core :as rum]
+            [four-thirty-three.shared.scheduled-recorder :as sr]
+            [four-thirty-three-core.protocols.scheduled :as sched]))
 
 (set! js/window.React (js/require "react"))
 (def ReactNative (js/require "react-native"))
 
 (defn create-element [rn-comp opts & children]
-      (apply js/React.createElement rn-comp (clj->js opts) children))
+  (apply js/React.createElement rn-comp (clj->js opts) children))
 
 (def app-registry (.-AppRegistry ReactNative))
 (def view (partial create-element (.-View ReactNative)))
@@ -15,21 +17,27 @@
 (def image (partial create-element (.-Image ReactNative)))
 (def touchable-highlight (partial create-element (.-TouchableHighlight ReactNative)))
 
-(def logo-img (js/require "./images/faf.png"))
+(def logo-img (js/require "./images/cljs.png"))
 
 (defn alert [title]
-  (.alert (.-Alert ReactNative) title))
+      (.alert (.-Alert ReactNative) title))
 
-(defonce app-state (atom {:greeting "how many layers of abstraction are you on"}))
+(defonce app-state (atom {:greeting "Four Thirty Three"
+                          :scheduled-recorder (sr/instantiate 1800000 10000)}))
 
-(defc AppRoot < rum/cursored-watch [state]
+(defc AppRoot < rum/reactive [state]
   (view {:style {:flexDirection "column" :margin 40 :alignItems "center"}}
-        (text {:style {:fontSize 30 :fontWeight "100" :marginBottom 20 :textAlign "center"}} (:greeting @state))
+        (text {:style {:fontSize 30 :fontWeight "100" :marginBottom 20 :textAlign "center"}} (:greeting (rum/react state)))
         (image {:source logo-img
-                :style  {:width 320 :height 320 :marginBottom 30}})
-        (touchable-highlight {:style   {:backgroundColor "#999" :padding 10 :borderRadius 5}
-                              :onPress #(alert "Your are like a little baby\nwatch this")}
-                             (text {:style {:color "white" :textAlign "center" :fontWeight "bold"}} "like, maybe 5, or 6 right now, my dude"))))
+                :style  {:width 80 :height 80 :marginBottom 30}})
+        (touchable-highlight (let [scheduled-recorder (:scheduled-recorder (rum/react state))]
+                               {:style   {:backgroundColor "#999" :padding 10 :borderRadius 5}
+                                :onPress #(sched/init scheduled-recorder)})
+                             (text {:style {:color "white" :textAlign "center" :fontWeight "bold"}} "start"))
+        (touchable-highlight (let [scheduled-recorder (:scheduled-recorder (rum/react state))]
+                               {:style   {:backgroundColor "#999" :padding 10 :borderRadius 5}
+                                :onPress #(sched/stop scheduled-recorder)})
+                             (text {:style {:color "white" :textAlign "center" :fontWeight "bold"}} "stop"))))
 
 (defonce root-component-factory (support/make-root-component-factory))
 
