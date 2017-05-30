@@ -22,22 +22,23 @@
 (defn alert [title]
       (.alert (.-Alert ReactNative) title))
 
-(defonce app-state (atom {:greeting "Four Thirty Three"
-                          :scheduled-recorder (sr/instantiate 1800000 10000)}))
+(defonce app-state (atom {:greeting "Four Thirty Three"}))
+
+(def scheduled-recorder (sr/instantiate 1800000 20000))
 
 (defc AppRoot < rum/reactive [state]
   (view {:style {:flexDirection "column" :margin 40 :alignItems "center"}}
         (text {:style {:fontSize 30 :fontWeight "100" :marginBottom 20 :textAlign "center"}} (:greeting (rum/react state)))
         (image {:source logo-img
                 :style  {:width 80 :height 80 :marginBottom 30}})
-        (touchable-highlight (let [scheduled-recorder (:scheduled-recorder (rum/react state))]
-                               {:style   {:backgroundColor "#999" :padding 10 :borderRadius 5}
-                                :onPress #(sched/init scheduled-recorder)})
-                             (text {:style {:color "white" :textAlign "center" :fontWeight "bold"}} "start"))
-        (touchable-highlight (let [scheduled-recorder (:scheduled-recorder (rum/react state))]
-                               {:style   {:backgroundColor "#999" :padding 10 :borderRadius 5}
-                                :onPress #(sched/stop scheduled-recorder)})
-                             (text {:style {:color "white" :textAlign "center" :fontWeight "bold"}} "stop"))))
+        (touchable-highlight
+         {:style   {:backgroundColor "#999" :padding 10 :borderRadius 5}
+          :onPress #(sched/init scheduled-recorder)}
+         (text {:style {:color "white" :textAlign "center" :fontWeight "bold"}} "start"))
+        (touchable-highlight
+         {:style   {:backgroundColor "#999" :padding 10 :borderRadius 5}
+          :onPress #(sched/stop scheduled-recorder)}
+         (text {:style {:color "white" :textAlign "center" :fontWeight "bold"}} "stop"))))
 
 (defonce root-component-factory (support/make-root-component-factory))
 

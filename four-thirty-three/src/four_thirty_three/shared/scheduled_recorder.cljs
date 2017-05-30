@@ -30,32 +30,30 @@
   sp/Scheduled
   (init [this]
     (.log js/console "STARTING UP SCHEDULED RECORDER")
+    (reset! recording-date (tc/to-long (t/now)))
     (sp/stop this)
-    (let [record-fn (fn []
-                      (let [now (tc/to-long (t/now))
-                            after-recording-date? (> now @recording-date)]
-                        (.log js/console (str "Job Fired, comparing current time with recording-date"))
-                        (.log js/console (str "NOW: " now " Recording-date: " @recording-date))
-                        (.log js/console (str "After recording date: " after-recording-date?))
-                        (when after-recording-date?
-                          (sp/perform this)
-                          (let [record-start-time now
-                                record-end-time (+ record-start-time recording-length)
-                                post-record-sleep (u/calc-post-record-sleep {:period period
-                                                                             :record-start-time record-start-time
-                                                                             :pre-record-sleep @pre-record-sleep
-                                                                             :record-end-time record-end-time})]
-                            (.log js/console "SUM OF SLEEPS: " (+ @pre-record-sleep post-record-sleep recording-length) " PERIOD: " period " (should be equal)")
-                            (reset! pre-record-sleep (u/calc-pre-record-sleep {:period period
-                                                                               :recording-length recording-length
-                                                                               :buffer-length buffer-length}))
-                            (swap! recording-date + @pre-record-sleep post-record-sleep)))))]
-      (register record-fn)
-      (schedule scheduler-period)))
+    (schedule scheduler-period))
   (perform [this]
-    (let [recording (rp/start recorder {})]
-      (.log js/console (str "RECORDING FOR: " recording-length " msecs"))
-      (.setTimeout BackgroundTimer (fn [] (rp/stop recorder recording)) recording-length)))
+    (let [now (tc/to-long (t/now))
+          after-recording-date? (> now @recording-date)]
+      (.log js/console (str "Job Fired, comparing current time with recording-date"))
+      (.log js/console (str "NOW: " (str (tc/from-long now)) " Recording-date: " (str (tc/from-long @recording-date))))
+      (.log js/console (str "After recording date: " after-recording-date?))
+      (when after-recording-date?
+        (rp/start recorder nil)
+        (.log js/console (str "RECORDING FOR: " recording-length " msecs"))
+        (.setTimeout BackgroundTimer (fn [] (rp/stop recorder nil)) recording-length)
+        (let [record-start-time now
+              record-end-time (+ record-start-time recording-length)
+              post-record-sleep (u/calc-post-record-sleep {:period period
+                                                           :record-start-time record-start-time
+                                                           :pre-record-sleep @pre-record-sleep
+                                                           :record-end-time record-end-time})]
+          (.log js/console "SUM OF SLEEPS: " (+ @pre-record-sleep post-record-sleep recording-length) " PERIOD: " period " (should be equal)")
+          (reset! pre-record-sleep (u/calc-pre-record-sleep {:period period
+                                                             :recording-length recording-length
+                                                             :buffer-length buffer-length}))
+          (swap! recording-date + @pre-record-sleep post-record-sleep)))))
   (stop [this]
     (.cancel BackgroundJob #js {:jobKey "fourThirtyThreeRecord"})))
 
@@ -66,5 +64,6 @@
                                                      :recording-length recording-length
                                                      :buffer-length buffer-length
                                                      :pre-record-sleep (atom 0)
-                                                     :recording-date (atom (tc/to-long (t/now)))})]
+                                                     :recording-date (atom nil)})]
+    (register (fn [] (sp/perform scheduled-recorder)))
     scheduled-recorder))

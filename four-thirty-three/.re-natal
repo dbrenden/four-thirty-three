@@ -6,9 +6,9 @@
     "prod": "env/prod"
   },
   "modules": [
-    "react-native-background-timer",
     "react-native-audio",
-    "react-native-sound"
+    "react-native-background-timer",
+    "react-native-background-job"
   ],
   "imageDirs": [
     "images"
@@ -20,9 +20,7 @@
     },
     "android": {
       "host": "localhost",
-      "modules": [
-        "react-native-background-job"
-      ]
+      "modules": []
     }
   }
 }

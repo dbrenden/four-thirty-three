@@ -9,7 +9,7 @@
 
 (defn generate-audio-path
   []
-  (str (.-MusicDirectoryPath AudioUtils) "/" (t/now) ".acc"))
+  (str (.-MusicDirectoryPath AudioUtils) "/" (t/now) ".aac"))
 
 (defn check-permission
   []

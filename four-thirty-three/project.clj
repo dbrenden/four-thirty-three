@@ -6,7 +6,7 @@
   :dependencies [[org.clojure/clojure "1.9.0-alpha16"]
                  [org.clojure/clojurescript "1.9.562"]
                  [dbrenden/four-thirty-three-core "0.1.0-SNAPSHOT"]
-                 [rum "0.10.8" :exclusions [[cljsjs/react cljsjs/react-dom sablono]]]]
+                 [rum "0.10.8" :exclusions [cljsjs/react cljsjs/react-dom sablono]]]
   :plugins [[lein-cljsbuild "1.1.4"]
             [lein-figwheel "0.5.10"]]
   :clean-targets ["target/" "index.ios.js" "index.android.js" #_($PLATFORM_CLEAN$)]
