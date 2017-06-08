@@ -5,6 +5,7 @@
             [four-thirty-three-core.protocols.scheduled :as sp]
             [four-thirty-three-core.util :as u]
             [four-thirty-three.shared.recorder :refer [Recorder]]
+            [four-thirty-three.shared.util :as su]
             [cljs.core.async :as a]
             [cljs.spec.alpha :as s]
             [cljs-time.core :as t]
@@ -31,14 +32,14 @@
   (init [this]
     (.log js/console "STARTING UP SCHEDULED RECORDER")
     (reset! recording-date (tc/to-long (t/now)))
-    (sp/stop this)
     (schedule scheduler-period))
   (perform [this]
     (let [now (tc/to-long (t/now))
           after-recording-date? (> now @recording-date)]
       (.log js/console (str "Job Fired, comparing current time with recording-date"))
-      (.log js/console (str "NOW: " (str (tc/from-long now)) " Recording-date: " (str (tc/from-long @recording-date))))
+      (.log js/console (str "Timestamp NOW: " (su/gen-timestamp now) " Recording-date: " (su/gen-timestamp @recording-date)))
       (.log js/console (str "After recording date: " after-recording-date?))
+
       (when after-recording-date?
         (rp/start recorder nil)
         (.log js/console (str "RECORDING FOR: " recording-length " msecs"))
@@ -56,6 +57,8 @@
           (swap! recording-date + @pre-record-sleep post-record-sleep)))))
   (stop [this]
     (.cancel BackgroundJob #js {:jobKey "fourThirtyThreeRecord"})))
+
+;;TODO: Replace all atoms with calls to AsyncStore
 
 (defn instantiate [period recording-length]
   (let [buffer-length 10000

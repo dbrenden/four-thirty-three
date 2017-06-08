@@ -1,5 +1,6 @@
 (ns four-thirty-three.shared.recorder
   (:require [four-thirty-three-core.protocols.recordable :as rp]
+            [four-thirty-three.shared.util :as su]
             [cljs-time.core :as t]))
 
 (def Audio (js/require "react-native-audio"))
@@ -9,7 +10,7 @@
 
 (defn generate-audio-path
   []
-  (str (.-MusicDirectoryPath AudioUtils) "/" (t/now) ".aac"))
+  (str (.-MusicDirectoryPath AudioUtils) "/" (su/gen-timestamp (t/now)) ".aac"))
 
 (defn check-permission
   []
