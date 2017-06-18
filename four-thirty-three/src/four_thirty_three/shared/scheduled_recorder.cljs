@@ -14,6 +14,7 @@
 
 (def BackgroundJob (js/require "react-native-background-job"))
 (def BackgroundTimer (js/require "react-native-background-timer"))
+(def SimpleStore (js/require "react-native-simple-store"))
 
 (def scheduler-period 1037000)
 
@@ -27,34 +28,42 @@
   (.log js/console (str "Scheduling function to fire in " (int (/ period 1000)) " secs"))
   (.schedule BackgroundJob #js {:jobKey "fourThirtyThreeRecord" :period period :timeout 900000}))
 
-(defrecord ScheduledRecorder [recorder period recording-length buffer-length pre-record-sleep recording-date]
+(defrecord ScheduledRecorder [recorder period recording-length buffer-length]
   sp/Scheduled
   (init [this]
     (.log js/console "STARTING UP SCHEDULED RECORDER")
-    (reset! recording-date (tc/to-long (t/now)))
-    (schedule scheduler-period))
+    (-> (.save SimpleStore "scheduler-state" #js {:recordingDate (tc/to-long (t/now))
+                                                  :preRecordSleep 0})
+        (.then (fn [] (schedule scheduler-period)))))
   (perform [this]
-    (let [now (tc/to-long (t/now))
-          after-recording-date? (> now @recording-date)]
-      (.log js/console (str "Job Fired, comparing current time with recording-date"))
-      (.log js/console (str "Timestamp NOW: " (su/gen-timestamp now) " Recording-date: " (su/gen-timestamp @recording-date)))
-      (.log js/console (str "After recording date: " after-recording-date?))
+    (.log js/console "Getting state from storage")
+    (-> (.get SimpleStore "scheduler-state")
+        (.then
+         (fn [state]
+           (.log js/console "Performing record")
+           (let [now (tc/to-long (t/now))
+                 recording-date (.-recordingDate state)
+                 after-recording-date? (> now recording-date)]
+             (.log js/console (str "Job Fired, comparing current time with recording-date"))
+             (.log js/console (str "Timestamp NOW: " (su/gen-timestamp now) " Recording-date: " (su/gen-timestamp recording-date)))
+             (.log js/console (str "After recording date: " after-recording-date?))
 
-      (when after-recording-date?
-        (rp/start recorder nil)
-        (.log js/console (str "RECORDING FOR: " recording-length " msecs"))
-        (.setTimeout BackgroundTimer (fn [] (rp/stop recorder nil)) recording-length)
-        (let [record-start-time now
-              record-end-time (+ record-start-time recording-length)
-              post-record-sleep (u/calc-post-record-sleep {:period period
-                                                           :record-start-time record-start-time
-                                                           :pre-record-sleep @pre-record-sleep
-                                                           :record-end-time record-end-time})]
-          (.log js/console "SUM OF SLEEPS: " (+ @pre-record-sleep post-record-sleep recording-length) " PERIOD: " period " (should be equal)")
-          (reset! pre-record-sleep (u/calc-pre-record-sleep {:period period
-                                                             :recording-length recording-length
-                                                             :buffer-length buffer-length}))
-          (swap! recording-date + @pre-record-sleep post-record-sleep)))))
+             (when after-recording-date?
+               (rp/start recorder nil)
+               (.log js/console (str "RECORDING FOR: " recording-length " msecs"))
+               (.setTimeout BackgroundTimer (fn [] (rp/stop recorder nil)) recording-length)
+               (let [record-start-time now
+                     record-end-time (+ record-start-time recording-length)
+                     pre-record-sleep (.-preRecordSleep state)
+                     post-record-sleep (u/calc-post-record-sleep {:period period
+                                                                  :record-start-time record-start-time
+                                                                  :pre-record-sleep pre-record-sleep
+                                                                  :record-end-time record-end-time})]
+                 (.log js/console "SUM OF SLEEPS: " (+ pre-record-sleep post-record-sleep recording-length) " PERIOD: " period " (should be equal)")
+                 (.update SimpleStore "scheduler-state" #js {:preRecordSleep (u/calc-pre-record-sleep {:period period
+                                                                                                       :recording-length recording-length
+                                                                                                       :buffer-length buffer-length})
+                                                             :recordingDate (+ recording-date pre-record-sleep post-record-sleep)}))))))))
   (stop [this]
     (.cancel BackgroundJob #js {:jobKey "fourThirtyThreeRecord"})))
 
@@ -65,8 +74,6 @@
         scheduled-recorder (map->ScheduledRecorder. {:recorder (Recorder.)
                                                      :period period
                                                      :recording-length recording-length
-                                                     :buffer-length buffer-length
-                                                     :pre-record-sleep (atom 0)
-                                                     :recording-date (atom nil)})]
+                                                     :buffer-length buffer-length})]
     (register (fn [] (sp/perform scheduled-recorder)))
     scheduled-recorder))

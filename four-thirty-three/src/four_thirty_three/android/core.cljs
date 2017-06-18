@@ -20,7 +20,7 @@
 (def logo-img (js/require "./images/cljs.png"))
 
 (defn alert [title]
-      (.alert (.-Alert ReactNative) title))
+  (.alert (.-Alert ReactNative) title))
 
 (defonce app-state (atom {:greeting "Four Thirty Three"}))
 
